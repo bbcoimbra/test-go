@@ -2,12 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
 type Account struct {
@@ -24,37 +18,25 @@ func get_next_account_id() int64 {
 	return cur_account_id
 }
 
-func accountCreationPath(w http.ResponseWriter, r *http.Request) {
+func persistAccount(reqBody []byte) *Account {
 	var newAccount Account
 	var newID int64
-	reqBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		panic(err)
-	}
 
-	// Persist Data
 	newID = get_next_account_id()
 	newAccount.AccountID = newID
 	json.Unmarshal(reqBody, &newAccount)
 	accounts = append(accounts, newAccount)
 
-	fmt.Println(accounts)
-	// Build response
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newAccount)
+	return &newAccount
 }
 
-func accountGetItemPath(w http.ResponseWriter, r *http.Request) {
-	account_id_str := mux.Vars(r)["accountId"]
-
-	account_id, err := strconv.ParseInt(account_id_str, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-
+func findAccount(accountId int64) *Account {
+	var accountToReturn *Account
 	for _, account := range accounts {
-		if account.AccountID == account_id {
-			json.NewEncoder(w).Encode(account)
+		if account.AccountID == accountId {
+			accountToReturn = &account
 		}
 	}
+
+	return accountToReturn
 }
